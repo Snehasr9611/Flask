@@ -1,0 +1,53 @@
+from flask import Flask
+from flask import request,make_response
+app=Flask(__name__)
+class Account:
+    name=''
+    ac_no=''
+    balance=0 
+    aadhar_no=''
+
+    def __init__(self,name,ac_no,balance,aadhar_no):
+        self.name=name
+        self.ac_no=ac_no 
+        self.balance=balance
+        self.aadhar_no=aadhar_no
+bank = {
+        1 : Account("sneha",1,10000,12345),
+        2 : Account("srushti",2,12000,12346),
+        3 : Account("varshitha",3,10000,12347)
+    }
+count=3
+
+@app.route("/api/user/",methods=["POST"])
+def create_user():
+    user=request.json
+    global count
+    count+=1
+    user['ac_no']=count
+    bank[count]=Account(user['name'],count,user['balance'],user['aadhar_no'])
+    #bank[count]=user
+    print(bank)
+    return str(user)
+@app.route("/api/user/<int:ac_no>",methods=["GET"])
+def get_user_info(ac_no):
+    return str({
+        "name":bank[ac_no].name,
+        "account no": bank[ac_no].ac_no,
+        "balance" : bank[ac_no].balance,
+        "Aadhar No." : bank[ac_no].aadhar_no
+
+    })
+@app.route("/api/user/<int:ac_no>",methods=["PUT"])
+def transcation(ac_no):
+    transcation_detail=request.json
+    if transcation_detail["type"]=="credit":
+        bank[ac_no].balance=bank[ac_no].balance + transcation_detail["amount"]
+    if transcation_detail["type"]=="debit":
+        if transcation_detail["amount"]>bank[ac_no].balance:
+            return make_response('insufficient amount',409)
+        else:
+            bank[ac_no].balance=bank[ac_no].balance -transcation_detail["amount"]
+    print(bank[ac_no].balance)
+    return str(bank[ac_no].balance)
+
